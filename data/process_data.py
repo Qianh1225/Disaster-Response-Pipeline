@@ -20,6 +20,8 @@ def clean_data(df):
     # convert category values to just numbers 0 or 1
     for col in categories.columns:
         categories[col] = categories[col].apply(lambda x: x[-1])
+        # convert column from string to numeric
+        categories[col] = pd.to_numeric(categories[col])
     # concatenate the original dataframe with the new 'categories' dataframe
     df.drop(columns=['categories'], inplace=True)
     df_new = pd.concat([df, categories], axis=1)

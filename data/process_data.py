@@ -6,32 +6,43 @@ def load_data(messages_filepath, categories_filepath):
     # load dataset
     messages = pd.read_csv(messages_filepath)
     categories = pd.read_csv(categories_filepath)
+
     # merge dataset
     df = pd.merge(categories, messages, how='inner', on='id')
+
     return df
+
 
 def clean_data(df):
     # split categories into sparate category column
     categories = df.categories.str.split(';', expand=True)
+
     # exact column name for each category
     category_col_name = categories.iloc[0,:].apply(lambda x: x[:-2]).values
+
     # rename the columns of 'categories'
     categories.columns = category_col_name
+
     # convert category values to just numbers 0 or 1
     for col in categories.columns:
         categories[col] = categories[col].apply(lambda x: x[-1])
         # convert column from string to numeric
         categories[col] = pd.to_numeric(categories[col])
+
     # concatenate the original dataframe with the new 'categories' dataframe
     df.drop(columns=['categories'], inplace=True)
     df_new = pd.concat([df, categories], axis=1)
+
     # drop duplicates
     df = df_new.drop_duplicates(subset=['id', 'message'])
+
     return df
-    
+
+
 def save_data(df, database_filename):
     save_path = 'sqlite:///'+ database_filename
     engine = create_engine(save_path)
+
     df.to_sql('Data', engine, index=False)
 
 

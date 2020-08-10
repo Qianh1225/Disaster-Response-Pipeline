@@ -31,7 +31,9 @@ def load_data(database_filepath):
     X = df.message
     Y = df.iloc[:,4:]
     category_names = Y.columns
+
     return X, Y, category_names
+
 
 def tokenize(text):
     """
@@ -56,24 +58,30 @@ def tokenize(text):
         clean_tok = lemmatizer.lemmatize(tok).lower().strip()
         if clean_tok not in stop_words:
             clean_tokens.append(clean_tok)
+
     return clean_tokens
 
 
 def build_model():
+    # build pipeline
     pipeline = Pipeline([
             ('vect', CountVectorizer(tokenizer=tokenize)),
             ('tfidf', TfidfTransformer()),
             ('clf', MultiOutputClassifier(RandomForestClassifier()))
             ])
+    # grid search
     parameters = {'clf__estimator__n_estimators':[50, 100, 200]}
     cv = GridSearchCV(pipeline, param_grid=parameters)
-    return pipeline
+
+    return cv
+
 
 def evaluate_model(model, X_test, Y_test, category_names):
     Y_pred = model.predict(X_test)
     for i, name in enumerate(category_names):
         print("category names:", name, '\n', classification_report(Y_test.iloc[:,i], Y_pred[:,i]))
 
+        
 def save_model(model, model_filepath):
     pickle.dump(model, open(model_filepath, 'wb'))
 

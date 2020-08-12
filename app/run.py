@@ -14,14 +14,46 @@ from sqlalchemy import create_engine
 
 app = Flask(__name__)
 
-def tokenize(text):
-    tokens = word_tokenize(text)
-    lemmatizer = WordNetLemmatizer()
+# def tokenize(text):
+#     tokens = word_tokenize(text)
+#     lemmatizer = WordNetLemmatizer()
 
+#     clean_tokens = []
+#     for tok in tokens:
+#         clean_tok = lemmatizer.lemmatize(tok).lower().strip()
+#         clean_tokens.append(clean_tok)
+
+#     return clean_tokens
+
+def tokenize(text):
+    """
+    Preprocess the text data 
+    
+    Args:
+    text: str.
+    
+    Returns:
+    clean_tokens: List[str]. 
+    """    
+    # remove punctuation
+    text = re.sub(r"[^\w\s]", "", text)
+    
+    # tokenize text
+    tokens = word_tokenize(text)
+    
+    # initiate lemmatizer
+    lemmatizer = WordNetLemmatizer()
+    
+    # stopping word
+    stop_words = set(stopwords.words('english')) 
+    
+    # iterate through each token
     clean_tokens = []
     for tok in tokens:
+        # lemmatize, normalize case, and remove leading/trailing white space
         clean_tok = lemmatizer.lemmatize(tok).lower().strip()
-        clean_tokens.append(clean_tok)
+        if clean_tok not in stop_words:
+            clean_tokens.append(clean_tok)
 
     return clean_tokens
 
@@ -39,18 +71,39 @@ model = joblib.load("../models/classifier.pkl")
 def index():
     
     # extract data needed for visuals
-    # TODO: Below is an example - modify to extract data for your own visuals
+    # graph 1
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
-    
+    # graph 2
+    categories_counts = df.iloc[:, 4:].sum().sort_values(ascending=False)
+    categories_names = list(categories_counts.index)
     # create visuals
-    # TODO: Below is an example - modify to create your own visuals
     graphs = [
+        # graph 1
+        {
+            'data': [
+                Bar(
+                    x=categories_names,
+                    y=categories_counts,
+                    marker={'color': 'rgb(142,124,195)',
+                            'opacity': 0.7}
+                )
+            ],
+
+            'layout': {
+                'title': 'Distribution of Message Categories',
+                'yaxis': {
+                    'title': "Count"
+                }
+            }
+        },
+        # graph 2
         {
             'data': [
                 Bar(
                     x=genre_names,
-                    y=genre_counts
+                    y=genre_counts,
+                    marker={'opacity': 0.7}
                 )
             ],
 

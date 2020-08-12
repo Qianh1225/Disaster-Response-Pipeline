@@ -26,6 +26,17 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 import pickle
 
 def load_data(database_filepath):
+    """
+    Load data from database_filepath
+    
+    Args:
+    database_filepath: str. The path of the data
+    
+    Returns:
+    X: pandas series[str]. The messages.
+    Y: pandas dataframe[int]. The classified labels.
+    category_names: List[str]. The names of Y's columns 
+    """
     engine = create_engine('sqlite:///'+database_filepath)
     df = pd.read_sql("SELECT * FROM Data", engine)
     X = df.message
@@ -37,7 +48,13 @@ def load_data(database_filepath):
 
 def tokenize(text):
     """
-    preprocess the text data
+    Preprocess the text data 
+    
+    Args:
+    text: str.
+    
+    Returns:
+    clean_tokens: List[str]. 
     """    
     # remove punctuation
     text = re.sub(r"[^\w\s]", "", text)
@@ -63,12 +80,16 @@ def tokenize(text):
 
 
 def build_model():
+    """
+    Build pipeline and  use grid search to find better parameters
+    """
     # build pipeline
     pipeline = Pipeline([
             ('vect', CountVectorizer(tokenizer=tokenize)),
             ('tfidf', TfidfTransformer()),
             ('clf', MultiOutputClassifier(RandomForestClassifier()))
             ])
+    
     # grid search
     parameters = {'clf__estimator__n_estimators':[50, 100, 200]}
     cv = GridSearchCV(pipeline, param_grid=parameters)
@@ -77,16 +98,25 @@ def build_model():
 
 
 def evaluate_model(model, X_test, Y_test, category_names):
+    """
+    Evaluate model by iterating through columns and print the f1 score, precision and recall
+    """
     Y_pred = model.predict(X_test)
     for i, name in enumerate(category_names):
         print("category names:", name, '\n', classification_report(Y_test.iloc[:,i], Y_pred[:,i]))
 
         
 def save_model(model, model_filepath):
+    """
+    Save model in model_filepath
+    """
     pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
+    """
+    Load data, build, train and save the model. 
+    """
     if len(sys.argv) == 3:
         database_filepath, model_filepath = sys.argv[1:]
         print('Loading data...\n    DATABASE: {}'.format(database_filepath))
